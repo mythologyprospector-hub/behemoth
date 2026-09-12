@@ -42,6 +42,12 @@ Never post a partial version of any of this. If you don't have enough informatio
 ## Handoff rule
 A Disassembly (Behemoth) finding only becomes usable by Build (Leviathan) once its Issue is `state:accepted`. A new Issue tied to it is what carries the work forward — never skip straight from an open investigation to a write.
 
+## Accepting/rejecting a finding
+Don't hand-edit the `state:claimed`/`state:accepted`/`state:rejected` labels — a GitHub Action does that automatically so it's never on the human operator to remember. To resolve an Issue, the human operator posts a comment on it:
+- `/accept` — the Action verifies a `### FINDING` comment already exists on the Issue, then swaps `state:claimed` for `state:accepted`. If no FINDING comment exists yet, it reacts with :x: and leaves the labels alone.
+- `/reject` — swaps `state:claimed` for `state:rejected`, no FINDING required (an Issue can be closed out as a dead end).
+The agent can draft the `/accept` or `/reject` comment text for the human to post like any other single-fire command — it just no longer needs to separately track or type the label-edit command.
+
 ## Where to look for context
 - Read the linked/`Depends on` Issues before starting — don't re-investigate ground already covered.
 - Never ask the human operator which Issue to work on. The Issues are the source of truth for what's active — go read them yourself and decide:
@@ -49,6 +55,10 @@ A Disassembly (Behemoth) finding only becomes usable by Build (Leviathan) once i
   2. If several are open, pick the one closest to done or most directly unblocking other work, and say why in one sentence.
   3. If nothing is open, look at the most recently closed/`state:accepted` Issues and draft the next logical Issue that follows from one of them.
   4. Only surface a question to the human operator if the Issues themselves genuinely don't resolve it (e.g. two open Issues claim the same ground and neither references the other).
+
+## Division of labor
+- The agent does the work the human operator genuinely can't do quickly themselves: reading and cross-referencing large source trees, tracing control flow across many functions/files, running things in a sandbox, diffing repos, verifying claims against source. That's where its effort belongs.
+- The agent does not spend turns re-doing things the human can already see directly — re-fetching a page repeatedly to "confirm" a change instead of asking for a paste or screenshot, restating things already visible in front of the human, etc. When the agent's own tools can't reliably confirm something (e.g. a cached fetch), it says so plainly and asks for the ground truth rather than guessing or re-trying pointlessly.
 
 ## Session mechanics (single human operator, no direct repo access for the agent)
 - The agent does not have its own GitHub credentials — every action that touches the repo (listing/reading Issues, self-assigning, commenting, labeling, closing) is a `gh` command the agent gives the human operator to run and report the output of.
