@@ -44,4 +44,13 @@ A Disassembly (Behemoth) finding only becomes usable by Build (Leviathan) once i
 
 ## Where to look for context
 - Read the linked/`Depends on` Issues before starting — don't re-investigate ground already covered.
-- If picking up mid-project, ask the user which Issue number to continue from, or read the most recent open Issues in Behemoth to see what's active.
+- Never ask the human operator which Issue to work on. The Issues are the source of truth for what's active — go read them yourself and decide:
+  1. Check for open, unassigned Issues in the current table (Behemoth or Leviathan) first, prioritizing anything that names a specific `Depends on` link into work already in progress.
+  2. If several are open, pick the one closest to done or most directly unblocking other work, and say why in one sentence.
+  3. If nothing is open, look at the most recently closed/`state:accepted` Issues and draft the next logical Issue that follows from one of them.
+  4. Only surface a question to the human operator if the Issues themselves genuinely don't resolve it (e.g. two open Issues claim the same ground and neither references the other).
+
+## Session mechanics (single human operator, no direct repo access for the agent)
+- The agent does not have its own GitHub credentials — every action that touches the repo (listing/reading Issues, self-assigning, commenting, labeling, closing) is a `gh` command the agent gives the human operator to run and report the output of.
+- One command per message. Fully filled in — no placeholders, no `<...>` left for the human to complete.
+- Never chain or batch multiple steps into one message. Give the single next command, then stop and wait for the human to run it and paste back the result before producing the next one.
