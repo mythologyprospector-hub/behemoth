@@ -22,14 +22,24 @@ jobs:
               const comments = await github.paginate(
                 github.rest.issues.listComments, { owner, repo, issue_number }
               );
-              const hasFinding = comments.some(c => c.body.includes('### FINDING'));
-              if (!hasFinding) {
+              const finding = comments.find(c => c.body.includes('### FINDING'));
+              if (!finding) {
                 await github.rest.reactions.createForIssueComment({
                   owner, repo, comment_id: context.payload.comment.id, content: '-1'
                 });
                 await github.rest.issues.createComment({
                   owner, repo, issue_number,
                   body: 'Cannot accept: no `### FINDING` comment exists on this Issue yet.'
+                });
+                return;
+              }
+              if (!/Source commit:\s*\S+/.test(finding.body)) {
+                await github.rest.reactions.createForIssueComment({
+                  owner, repo, comment_id: context.payload.comment.id, content: '-1'
+                });
+                await github.rest.issues.createComment({
+                  owner, repo, issue_number,
+                  body: 'Cannot accept: the `### FINDING` comment is missing a `Source commit:` line.'
                 });
                 return;
               }

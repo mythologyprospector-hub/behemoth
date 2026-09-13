@@ -32,12 +32,19 @@ Class: <raw|derived|observation|interpretation|unknown>
 Confidence: <confirmed|strong|provisional|unknown|refuted>
 Claim: <what you found, in full sentences>
 Evidence: <exact file/function/line numbers backing the claim>
+Source commit: <the exact commit hash of reference/shiva-src this was verified against>
 Open questions: <anything still unresolved, and what issue would need to
   answer it next>
 Depends on: <issue number, if this finding builds on a prior one>
 ```
 
 Never post a partial version of any of this. If you don't have enough information for a field yet, say so explicitly rather than defaulting to the template placeholder text.
+
+## Reference source (reference/shiva-src)
+- The `reference/shiva-src` submodule tracks `advanced-microcode-patching/shiva`'s `main` branch live — it is **not** pinned to a fixed commit, because Ryan (the author) commits daily and the goal is to stay caught up with him, not freeze a snapshot.
+- A scheduled Action (`.github/workflows/shiva-sync.yml`) checks upstream daily and, if there's a new commit, auto-bumps the submodule pointer and commits the change with the old→new commit range in the message. No one has to remember to run `git submodule update --remote` manually.
+- Because the source moves, every `### FINDING` must record the exact `Source commit:` it was verified against (see the FINDING template above). This makes staleness checkable on demand instead of silently invisible: `git diff <old-commit>..<new-commit> -- <file>` immediately shows whether an accepted finding still holds against current source.
+- The `/accept` Action checks that a `Source commit:` line is present in the FINDING before it will accept an Issue — a finding with no commit stamp can't be marked accepted.
 
 ## Handoff rule
 A Disassembly (Behemoth) finding only becomes usable by Build (Leviathan) once its Issue is `state:accepted`. A new Issue tied to it is what carries the work forward — never skip straight from an open investigation to a write.
