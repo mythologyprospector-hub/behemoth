@@ -3,10 +3,15 @@ Paste this to any AI (Claude, ChatGPT, etc.) at the start of a session working B
 
 ---
 
-You are working inside a two-repo AI orchestration system built to reverse-engineer Shiva/shiva-ld (ELF/C) toward building Namagiri. Two private GitHub repos under `mythologyprospector-hub`:
+You are working inside a two-repo AI orchestration system built to reverse-engineer Shiva/shiva-ld (ELF/C) toward building Namagiri. Two GitHub repos under `mythologyprospector-hub`:
 
-- **Behemoth** = disassembly table. Read-only investigation. Findings only, never source writes.
+- **Behemoth** = disassembly table. Read-only investigation. Findings only, never source writes. **Public repo.**
 - **Leviathan** = build table. Implementation only, and only against Issues that reference an accepted Behemoth finding.
+
+## Visibility
+Behemoth is public — anyone can read it, not just the human operator. Issue creation is restricted to the repo owner (a repo setting), so outside users can't open new Issues, but the content itself is world-readable. Consequences:
+- **Never post anything from private/confidential material** (e.g. anything Ryan has shared under an explicit "eyes only"/private understanding) into a Behemoth Issue, comment, or the reference source — findings must be derived from the public `reference/shiva-src` submodule and public knowledge only.
+- Comments on Issues are **not visible to logged-out viewers** — an agent trying to read Issue content via an unauthenticated web fetch will see the Issue body but zero comments, no matter how many exist. Don't mistake that for the comments not existing; ask the human operator to paste comment content instead of concluding a FINDING wasn't posted.
 
 Every unit of work is a GitHub Issue. GitHub's native issue-assignment is the lock — an Issue with no assignee cannot be acted on; self-assigning is how an agent claims a job so two agents never collide on the same one.
 
@@ -45,15 +50,18 @@ Never post a partial version of any of this. If you don't have enough informatio
 - A scheduled Action (`.github/workflows/shiva-sync.yml`) checks upstream daily and, if there's a new commit, auto-bumps the submodule pointer and commits the change with the old→new commit range in the message. No one has to remember to run `git submodule update --remote` manually.
 - Because the source moves, every `### FINDING` must record the exact `Source commit:` it was verified against (see the FINDING template above). This makes staleness checkable on demand instead of silently invisible: `git diff <old-commit>..<new-commit> -- <file>` immediately shows whether an accepted finding still holds against current source.
 - The `/accept` Action checks that a `Source commit:` line is present in the FINDING before it will accept an Issue — a finding with no commit stamp can't be marked accepted.
+- **Old findings without a `Source commit:` line are unverified by default.** Before accepting or building on one, check whether its cited evidence (file paths, function names) actually exists in the current `reference/shiva-src` — this project has already hit a real case where early findings were made against `elfmaster/shiva` (the pre-fork original) before standardizing on `advanced-microcode-patching/shiva`, and cited a file (`modules/shakti_runtime.c`) that had been deleted from the fork entirely. If a cited file/function is missing, post a `### FINDING (correction)` explaining what changed and why, rather than silently trusting or silently discarding the old claim.
 
 ## Handoff rule
 A Disassembly (Behemoth) finding only becomes usable by Build (Leviathan) once its Issue is `state:accepted`. A new Issue tied to it is what carries the work forward — never skip straight from an open investigation to a write.
 
 ## Accepting/rejecting a finding
 Don't hand-edit the `state:claimed`/`state:accepted`/`state:rejected` labels — a GitHub Action does that automatically so it's never on the human operator to remember. To resolve an Issue, the human operator posts a comment on it:
-- `/accept` — the Action verifies a `### FINDING` comment already exists on the Issue, then swaps `state:claimed` for `state:accepted`. If no FINDING comment exists yet, it reacts with :x: and leaves the labels alone.
+- `/accept` — the Action scans *all* comments on the Issue for one containing `### FINDING` **and** a `Source commit:` line (checking every FINDING comment, not just the first one posted — an Issue can accumulate multiple FINDING/addendum/correction comments over time). If at least one qualifies, it swaps `state:claimed` for `state:accepted`. If none exist yet, or none have a `Source commit:` stamp, it posts a rejection comment explaining which and leaves the labels alone.
 - `/reject` — swaps `state:claimed` for `state:rejected`, no FINDING required (an Issue can be closed out as a dead end).
 The agent can draft the `/accept` or `/reject` comment text for the human to post like any other single-fire command — it just no longer needs to separately track or type the label-edit command.
+
+Two setup gotchas already hit once and fixed, worth knowing if the Action ever silently no-ops again: (1) the repo's Settings → Actions → General → Workflow permissions must be set to "Read and write permissions", or the default `GITHUB_TOKEN` can't actually apply labels even with `permissions: issues: write` declared in the workflow file; (2) if a gate check only inspects the *first* matching comment instead of scanning all of them, an old/incomplete comment earlier in the thread can block a later, correct one from passing.
 
 ## Where to look for context
 - Read the linked/`Depends on` Issues before starting — don't re-investigate ground already covered.
